@@ -1,7 +1,7 @@
 require("dotenv").config();
 const http = require("http");
 
-// Простой веб-сервер, чтобы Render видел открытый порт (Бесплатно)
+// Простой веб-сервер, чтобы Render видел открытый порт и не выдавал ошибку
 http.createServer((req, res) => {
     res.write("Bot is running!");
     res.end();
@@ -44,7 +44,7 @@ client.once("ready", async () => {
             return;
         }
 
-        // Удаляем старые сообщения бота в канале
+        // Удаляем старые сообщения бота в канале, чтобы кнопка всегда была актуальной
         const messages = await channel.messages.fetch({ limit: 10 });
         const botMessages = messages.filter(msg => msg.author.id === client.user.id);
         
@@ -72,7 +72,7 @@ client.once("ready", async () => {
     }
 });
 
-// Роль при входе
+// Выдача начальной роли при входе на сервер
 client.on("guildMemberAdd", async member => {
     try {
         const role = member.guild.roles.cache.get(unverifiedRole);
@@ -82,34 +82,39 @@ client.on("guildMemberAdd", async member => {
     }
 });
 
+// Обработка взаимодействия с кнопкой и формой
 client.on("interactionCreate", async interaction => {
     // Открытие модального окна
     if (interaction.isButton() && interaction.customId === "register") {
-        const modal = new ModalBuilder()
-            .setCustomId("registerForm")
-            .setTitle("Регистрация");
+        try {
+            const modal = new ModalBuilder()
+                .setCustomId("registerForm")
+                .setTitle("Регистрация");
 
-        const nameInput = new TextInputBuilder()
-            .setCustomId("name")
-            .setLabel("Ваше имя")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true);
+            const nameInput = new TextInputBuilder()
+                .setCustomId("name")
+                .setLabel("Ваше имя")
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true);
 
-        const nickInput = new TextInputBuilder()
-            .setCustomId("gameNick")
-            .setLabel("Ник в Русской Рыбалке 4")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true);
+            const nickInput = new TextInputBuilder()
+                .setCustomId("gameNick")
+                .setLabel("Ник в Русской Рыбалке 4")
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true);
 
-        modal.addComponents(
-            new ActionRowBuilder().addComponents(nameInput),
-            new ActionRowBuilder().addComponents(nickInput)
-        );
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(nameInput),
+                new ActionRowBuilder().addComponents(nickInput)
+            );
 
-        await interaction.showModal(modal);
+            await interaction.showModal(modal);
+        } catch (err) {
+            console.log("⚠️ Ошибка открытия модалки (задержка Discord):", err.message);
+        }
     }
 
-    // Обработка формы
+    // Обработка отправки формы
     if (interaction.isModalSubmit() && interaction.customId === "registerForm") {
         const username = interaction.fields.getTextInputValue("name");
         const gameNick = interaction.fields.getTextInputValue("gameNick");
@@ -118,10 +123,10 @@ client.on("interactionCreate", async interaction => {
             const role = interaction.guild.roles.cache.get(fishermanRole);
 
             if (!role) {
-                return interaction.reply({
+                return await interaction.reply({
                     content: "❌ Роль 'Рыбачок' не найдена",
                     ephemeral: true
-                });
+                }).catch(() => {});
             }
 
             // Изменение никнейма (если это не владелец)
@@ -145,15 +150,15 @@ client.on("interactionCreate", async interaction => {
             await interaction.reply({
                 content: "✅ Регистрация успешно завершена!",
                 ephemeral: true
-            });
+            }).catch(() => {});
 
         } catch (err) {
-            console.log("❌ Ошибка регистрации:", err);
+            console.log("❌ Ошибка регистрации:", err.message);
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
                     content: `❌ Ошибка: ${err.message}`,
                     ephemeral: true
-                });
+                }).catch(() => {});
             }
         }
     }
