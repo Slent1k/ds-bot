@@ -1,3 +1,11 @@
+const http = require("http");
+
+// Створюємо простий сервер, щоб Render бачив відкритий порт
+http.createServer((req, res) => {
+    res.write("Bot is alive!");
+    res.end();
+}).listen(process.env.PORT || 3000);
+
 require("dotenv").config();
 
 const {
