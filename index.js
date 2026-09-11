@@ -1,12 +1,13 @@
+require("dotenv").config();
 const http = require("http");
 
-// Створюємо простий сервер, щоб Render бачив відкритий порт
+// Простой веб-сервер, чтобы Render видел открытый порт (Бесплатно)
 http.createServer((req, res) => {
-    res.write("Bot is alive!");
+    res.write("Bot is running!");
     res.end();
-}).listen(process.env.PORT || 3000);
-
-require("dotenv").config();
+}).listen(process.env.PORT || 3000, () => {
+    console.log("🌐 Веб-сервер запущен для Render");
+});
 
 const {
     Client,
@@ -43,27 +44,28 @@ client.once("ready", async () => {
             return;
         }
 
-        // Проверяем, есть ли уже кнопка в канале
+        // Удаляем старые сообщения бота в канале
         const messages = await channel.messages.fetch({ limit: 10 });
-        const hasButton = messages.some(msg => msg.author.id === client.user.id && msg.components.length > 0);
-
-        if (!hasButton) {
-            const button = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId("register")
-                    .setLabel("🎣 Регистрация")
-                    .setStyle(ButtonStyle.Primary)
-            );
-
-            await channel.send({
-                content: "Для получения доступа к серверу нажмите кнопку ниже:",
-                components: [button]
-            });
-
-            console.log("✅ Кнопка успешно отправлена");
-        } else {
-            console.log("ℹ️ Кнопка регистрации уже есть в канале");
+        const botMessages = messages.filter(msg => msg.author.id === client.user.id);
+        
+        for (const msg of botMessages.values()) {
+            await msg.delete().catch(() => {});
         }
+
+        // Отправляем новую кнопку
+        const button = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId("register")
+                .setLabel("🎣 Регистрация")
+                .setStyle(ButtonStyle.Primary)
+        );
+
+        await channel.send({
+            content: "Для получения доступа к серверу нажмите кнопку ниже:",
+            components: [button]
+        });
+
+        console.log("✅ Новая кнопка успешно отправлена");
 
     } catch (err) {
         console.log("❌ Ошибка отправки кнопки:", err.message);
@@ -90,14 +92,12 @@ client.on("interactionCreate", async interaction => {
         const nameInput = new TextInputBuilder()
             .setCustomId("name")
             .setLabel("Ваше имя")
-            .setPlaceholder("Александр")
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
 
         const nickInput = new TextInputBuilder()
             .setCustomId("gameNick")
             .setLabel("Ник в Русской Рыбалке 4")
-            .setPlaceholder("Slent1k")
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
 
