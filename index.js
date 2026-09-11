@@ -18,24 +18,24 @@ const client = new Client({
     ]
 });
 
-// ===== НАЛАШТУВАННЯ =====
-const unverifiedRole = "1533152280113582304"; // Не зареєстрований
-const fishermanRole = "1533152064257921235";  // Рибачок
-const registerChannel = "1532669609059291166"; // Канал реєстрації
+// ===== НАСТРОЙКИ =====
+const unverifiedRole = "1533152280113582304"; // Не зарегистрирован
+const fishermanRole = "1533152064257921235";  // Рыбачок
+const registerChannel = "1532669609059291166"; // Канал регистрации
 // =====================
 
 client.once("ready", async () => {
-    console.log(`✅ Бот запущено: ${client.user.tag}`);
+    console.log(`✅ Бот запущен: ${client.user.tag}`);
 
     try {
         const channel = await client.channels.fetch(registerChannel);
 
         if (!channel) {
-            console.log("❌ Канал реєстрації не знайдено");
+            console.log("❌ Канал регистрации не найден");
             return;
         }
 
-        // Перевіряємо, чи немає вже кнопки в каналі
+        // Проверяем, есть ли уже кнопка в канале
         const messages = await channel.messages.fetch({ limit: 10 });
         const hasButton = messages.some(msg => msg.author.id === client.user.id && msg.components.length > 0);
 
@@ -43,52 +43,52 @@ client.once("ready", async () => {
             const button = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
                     .setCustomId("register")
-                    .setLabel("🎣 Реєстрація")
+                    .setLabel("🎣 Регистрация")
                     .setStyle(ButtonStyle.Primary)
             );
 
             await channel.send({
-                content: "Для отримання доступу до сервера натисніть кнопку нижче:",
+                content: "Для получения доступа к серверу нажмите кнопку ниже:",
                 components: [button]
             });
 
-            console.log("✅ Кнопку успішно відправлено");
+            console.log("✅ Кнопка успешно отправлена");
         } else {
-            console.log("ℹ️ Кнопка реєстрації вже є в каналі");
+            console.log("ℹ️ Кнопка регистрации уже есть в канале");
         }
 
     } catch (err) {
-        console.log("❌ Помилка відправки кнопки:", err.message);
+        console.log("❌ Ошибка отправки кнопки:", err.message);
     }
 });
 
-// Роль при вході
+// Роль при входе
 client.on("guildMemberAdd", async member => {
     try {
         const role = member.guild.roles.cache.get(unverifiedRole);
         if (role) await member.roles.add(role);
     } catch (err) {
-        console.log("❌ Помилка видачі початкової ролі:", err.message);
+        console.log("❌ Ошибка выдачи начальной роли:", err.message);
     }
 });
 
 client.on("interactionCreate", async interaction => {
-    // Відкриття модалки
+    // Открытие модального окна
     if (interaction.isButton() && interaction.customId === "register") {
         const modal = new ModalBuilder()
             .setCustomId("registerForm")
-            .setTitle("Реєстрація");
+            .setTitle("Регистрация");
 
         const nameInput = new TextInputBuilder()
             .setCustomId("name")
-            .setLabel("Ваше ім'я")
-            .setPlaceholder("Олександр")
+            .setLabel("Ваше имя")
+            .setPlaceholder("Александр")
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
 
         const nickInput = new TextInputBuilder()
             .setCustomId("gameNick")
-            .setLabel("Нік у Русской Рыбалке 4")
+            .setLabel("Ник в Русской Рыбалке 4")
             .setPlaceholder("Slent1k")
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
@@ -101,7 +101,7 @@ client.on("interactionCreate", async interaction => {
         await interaction.showModal(modal);
     }
 
-    // Обробка форми
+    // Обработка формы
     if (interaction.isModalSubmit() && interaction.customId === "registerForm") {
         const username = interaction.fields.getTextInputValue("name");
         const gameNick = interaction.fields.getTextInputValue("gameNick");
@@ -111,39 +111,39 @@ client.on("interactionCreate", async interaction => {
 
             if (!role) {
                 return interaction.reply({
-                    content: "❌ Роль 'Рибачок' не знайдена",
+                    content: "❌ Роль 'Рыбачок' не найдена",
                     ephemeral: true
                 });
             }
 
-            // Зміна нікнейму (якщо це не власник)
+            // Изменение никнейма (если это не владелец)
             if (interaction.member.id !== interaction.guild.ownerId) {
                 try {
                     await interaction.member.setNickname(`${username} | ${gameNick}`);
                 } catch (err) {
-                    console.log("⚠️ Нік не змінено:", err.message);
+                    console.log("⚠️ Ник не изменен:", err.message);
                 }
             }
 
-            // Зміна ролей
+            // Изменение ролей
             try {
                 await interaction.member.roles.remove(unverifiedRole);
             } catch (err) {
-                console.log("⚠️ Стару роль не знято:", err.message);
+                console.log("⚠️ Старая роль не снята:", err.message);
             }
 
             await interaction.member.roles.add(role);
 
             await interaction.reply({
-                content: "✅ Реєстрацію успішно завершено!",
+                content: "✅ Регистрация успешно завершена!",
                 ephemeral: true
             });
 
         } catch (err) {
-            console.log("❌ Помилка реєстрації:", err);
+            console.log("❌ Ошибка регистрации:", err);
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
-                    content: `❌ Помилка: ${err.message}`,
+                    content: `❌ Ошибка: ${err.message}`,
                     ephemeral: true
                 });
             }
