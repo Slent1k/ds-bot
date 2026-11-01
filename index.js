@@ -108,14 +108,18 @@ client.on("interactionCreate", async interaction => {
                 new ActionRowBuilder().addComponents(nickInput)
             );
 
+            // Показываем модалку (модалки открываются мгновенно, defer тут не нужен)
             await interaction.showModal(modal);
         } catch (err) {
-            console.log("⚠️ Ошибка открытия модалки (задержка Discord):", err.message);
+            console.log("⚠️ Ошибка открытия модалки:", err.message);
         }
     }
 
     // Обработка отправки формы
     if (interaction.isModalSubmit() && interaction.customId === "registerForm") {
+        // Сразу говорим Discord, что мы начали обрабатывать форму (убирает ошибку таймаута!)
+        await interaction.deferReply({ ephemeral: true });
+
         const username = interaction.fields.getTextInputValue("name");
         const gameNick = interaction.fields.getTextInputValue("gameNick");
 
@@ -123,10 +127,10 @@ client.on("interactionCreate", async interaction => {
             const role = interaction.guild.roles.cache.get(fishermanRole);
 
             if (!role) {
-                return await interaction.reply({
+                return await interaction.followup({
                     content: "❌ Роль 'Рыбачок' не найдена",
                     ephemeral: true
-                }).catch(() => {});
+                });
             }
 
             // Изменение никнейма (если это не владелец)
@@ -134,7 +138,7 @@ client.on("interactionCreate", async interaction => {
                 try {
                     await interaction.member.setNickname(`${username} | ${gameNick}`);
                 } catch (err) {
-                    console.log("⚠️ Ник не изменен:", err.message);
+                    console.log("⚠️ Ник не изменен (возможно, выше роли бота):", err.message);
                 }
             }
 
@@ -147,19 +151,18 @@ client.on("interactionCreate", async interaction => {
 
             await interaction.member.roles.add(role);
 
-            await interaction.reply({
+            // Финальный ответ через followup, так как был deferReply
+            await interaction.followup({
                 content: "✅ Регистрация успешно завершена!",
                 ephemeral: true
-            }).catch(() => {});
+            });
 
         } catch (err) {
             console.log("❌ Ошибка регистрации:", err.message);
-            if (!interaction.replied && !interaction.deferred) {
-                await interaction.reply({
-                    content: `❌ Ошибка: ${err.message}`,
-                    ephemeral: true
-                }).catch(() => {});
-            }
+            await interaction.followup({
+                content: `❌ Ошибка: ${err.message}`,
+                ephemeral: true
+            }).catch(() => {});
         }
     }
 });
