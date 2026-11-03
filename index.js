@@ -15,12 +15,10 @@ app.get('/', (req, res) => res.send('сервер запущен для Render')
 app.listen(PORT, () => console.log(`🌐 сервер запущен на порту ${PORT}`));
 
 // --- 3. Инициализация клиента Discord ---
+// Замените существующий const client = new Client({...}) на этот:
 const client = new Client({
     intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.Guilds
     ]
 });
 
