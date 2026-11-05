@@ -16,32 +16,8 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
 
-client.once(Events.ClientReady, async (c) => {
+client.once(Events.ClientReady, (c) => {
     console.log(`Bot started as ${c.user.tag}`);
-    try {
-        const channel = await client.channels.fetch(REGISTER_CHANNEL_ID);
-        if (!channel) return;
-
-        const messages = await channel.messages.fetch({ limit: 10 });
-        const existingButtonMessage = messages.find(m => m.author.id === c.user.id && m.components.length > 0);
-
-        if (!existingButtonMessage) {
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId('btn_register')
-                    .setLabel('Registration')
-                    .setEmoji('🎣')
-                    .setStyle(ButtonStyle.Primary)
-            );
-
-            await channel.send({
-                content: 'Click the button below to register:',
-                components: [row]
-            });
-        }
-    } catch (err) {
-        console.error('Error:', err);
-    }
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
