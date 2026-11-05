@@ -16,8 +16,35 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
 
-client.once(Events.ClientReady, (c) => {
+client.once(Events.ClientReady, async (c) => {
     console.log(`Bot started as ${c.user.tag}`);
+    
+    // Автоматическая отправка кнопки в канал регистрации
+    try {
+        const channel = await client.channels.fetch(REGISTER_CHANNEL_ID);
+        if (channel) {
+            const messages = await channel.messages.fetch({ limit: 10 });
+            const hasButton = messages.some(m => m.author.id === c.user.id && m.components.length > 0);
+
+            if (!hasButton) {
+                const row = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('btn_register')
+                        .setLabel('Регистрация')
+                        .setEmoji('🎣')
+                        .setStyle(ButtonStyle.Primary)
+                );
+
+                await channel.send({
+                    content: 'Для получения доступа к серверу нажмите кнопку ниже:',
+                    components: [row]
+                });
+                console.log('Кнопка регистрации успешно отправлена в канал!');
+            }
+        }
+    } catch (err) {
+        console.error('Ошибка при отправке кнопки:', err);
+    }
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
